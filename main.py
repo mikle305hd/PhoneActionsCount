@@ -1,3 +1,6 @@
+import re
+from typing import Tuple
+
 buttons = {
     1: ['1'], 2: ['2', 'a', 'b', 'c'], 3: ['3', 'd', 'e', 'f'],
     4: ['4', 'g', 'h', 'i'], 5: ['5', 'j', 'k', 'l'], 6: ['6', 'm', 'n', 'o'],
@@ -8,32 +11,35 @@ buttons = {
 
 def add_asterisks(word: str) -> str:
     """
-    :param word: string (word) with digits and letters
-    :return: string (word) with asterisks before each case change
+    Adding asterisk before first upper case and before every case change
+    :param word: word with digits and letters only
+    :return: word with asterisks before each case change
     """
     new_word = ''
     # Доходим до первой большой буквы
-    for i in range(0, len(word)):
-        if word[i].islower() or word[i].isdigit():
-            new_word += word[i]
+    for i, char in enumerate(word):
+        if char.islower() or char.isdigit():
+            new_word += char
         else:
             word = word[i:]
             new_word += '*'
             break
     previous_letter = -1
-    for i in range(0, len(word)):
-        if (previous_letter != -1) and (previous_letter.isupper() != word[i].isupper()):
-            new_word += f'*{word[i]}'
+    for char in word:
+        if (previous_letter != -1) and (previous_letter.isupper() != char.isupper()):
+            new_word += f'*{char}'
         else:
-            new_word += word[i]
-        if not word[i].isdigit():
-            previous_letter = word[i]
+            new_word += char
+        if not char.isdigit():
+            previous_letter = char
     return new_word
 
-def get_indexes_from_num(number: int):
+
+def get_indexes_from_num(number: int) -> Tuple[int, int]:
     """
-    :param number: number (key) - button on phone keyboard 4x3
-    :return: tuple(row, column) - indexes
+    Getting indexes (row and column) of matrix with a dictionary key
+    :param number: dictionary key - button on phone keyboard 4x3
+    :return: indexes - row and column
     """
     # Находим индексы нужного номера (ключа)
     if number in range(1, 4):
@@ -48,11 +54,13 @@ def get_indexes_from_num(number: int):
     column = (number - 1) if (number in range(1, 3)) else 2
     return (row, column)
 
+
 def go_to_target(selected_key: int, target_key: int) -> int:
     """
-    :param selected_key:
-    :param target_key:
-    :return: int count of clicks that needs to reach end number key
+    Counts moves that need to go from selected key to target key
+    :param selected_key: start dictionary key
+    :param target_key: end dictionary key
+    :return: count of clicks which need to reach end number key
     """
     moves = 0
     (start_row, start_column) = get_indexes_from_num(selected_key)
@@ -72,28 +80,36 @@ def go_to_target(selected_key: int, target_key: int) -> int:
 
     return moves
 
-def get_num_from_symbol(symbol: str) -> (int, int):
+
+def get_key_from_char(char: str) -> Tuple[int, int]:
     """
-    :param symbol:
-    :return: tuple(number, clicks) - button on phone keyboard 4x3, clicks on key after key select
+    Getting key from symbol
+    :param char:
+    :return: key on phone keyboard 4x3, count of clicks on key needed after key select
     """
     # Достаем ключ (номер) символа (цифры, буквы, звёздочки, решётки) на который нужно нажать
-    for key in buttons:
+    for key, chars in buttons.items():
         # buttons[key] - массив символов принадлежащих определенному номеру (ключу)
-        for i in range(0, len(buttons[key])):
-            if symbol == buttons[key][i]:
-                return (key, i)
+        for counter in range(0, len(chars)):
+            if char == chars[counter]:
+                return (key, counter)
+
 
 def main():
     print('Введите слово:', end=' ')
-    word = add_asterisks(input()).lower()
-    all_clicks = 0
+    word = input()
+    # Проверка на валидность
+    if not (re.compile('[@_!#$%^&*()<>?/\|}{~: ]').search(word) == None):
+        print('Ошибка валидности: введёная строка содержит специальные символы или пробелы')
+        return
+    word = add_asterisks(word).lower()
 
+    all_clicks = 0
     previous_char = '1'
     for char in word:
-        # clicks - количество нажатий на все кнопки
-        (prev_key, clicks) = get_num_from_symbol(previous_char)
-        (key, clicks) = get_num_from_symbol(char)
+        # clicks - количество нажатий требуемое для нынешнего символа
+        (prev_key, clicks) = get_key_from_char(previous_char)
+        (key, clicks) = get_key_from_char(char)
         clicks += go_to_target(prev_key, key)
         # 2 раза ОК для подтверждения
         if key in range(2, 10):
@@ -105,7 +121,8 @@ def main():
         all_clicks += clicks
         previous_char = char
 
-    print(f'Требуемое количество нажатий на пульте дистанционного управления равно {all_clicks}', end='')
+    print(f'Требуемое количество нажатий на пульте дистанционного управления равно {all_clicks}')
+
 
 if __name__ == '__main__':
     main()
